@@ -1,3 +1,14 @@
+---
+title: Hospital Scheduling Environment
+emoji: 🏥
+colorFrom: blue
+colorTo: green
+sdk: docker
+sdk_version: "1.0"
+app_file: app.py
+pinned: false
+---
+
 # 🏥 HospitalSchedulingEnv
 
 > An OpenEnv-compliant environment for training AI agents on **real-world hospital resource scheduling**.
