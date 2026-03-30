@@ -1,0 +1,148 @@
+name: HospitalSchedulingEnv
+version: "1.0.0"
+description: >
+  A real-world hospital resource scheduling environment where an AI agent
+  allocates scarce hospital resources (ICU beds, general beds, OR rooms,
+  ventilators, nurses, doctors) to incoming patients of varying acuity.
+  The agent must triage correctly, minimise adverse events for critical patients,
+  and maintain throughput — mirroring the decisions made by hospital charge nurses
+  and administrators in real emergency and inpatient settings.
+
+domain: healthcare
+tags:
+  - scheduling
+  - resource-allocation
+  - triage
+  - real-world
+  - multi-resource
+
+# ── Observation Space ──────────────────────────────────────────────────────────
+observation_space:
+  type: Dict
+  fields:
+    hour:                  {type: int,   range: [0, 168],  description: "Current simulation hour"}
+    icu_beds_free:         {type: int,   range: [0, 10],   description: "Available ICU beds"}
+    general_beds_free:     {type: int,   range: [0, 40],   description: "Available general beds"}
+    or_rooms_free:         {type: int,   range: [0, 5],    description: "Available OR rooms"}
+    ventilators_free:      {type: int,   range: [0, 8],    description: "Available ventilators"}
+    nurses_free:           {type: int,   range: [0, 20],   description: "Available nurses"}
+    doctors_free:          {type: int,   range: [0, 8],    description: "Available doctors"}
+    n_waiting_critical:    {type: int,   range: [0, 100],  description: "Critical patients in queue"}
+    n_waiting_high:        {type: int,   range: [0, 100],  description: "High-acuity patients in queue"}
+    n_waiting_medium:      {type: int,   range: [0, 100],  description: "Medium-acuity patients in queue"}
+    n_waiting_low:         {type: int,   range: [0, 100],  description: "Low-acuity patients in queue"}
+    n_admitted_critical:   {type: int,   range: [0, 50],   description: "Critical patients admitted"}
+    n_admitted_high:       {type: int,   range: [0, 50],   description: "High-acuity patients admitted"}
+    n_admitted_medium:     {type: int,   range: [0, 50],   description: "Medium-acuity patients admitted"}
+    n_admitted_low:        {type: int,   range: [0, 50],   description: "Low-acuity patients admitted"}
+    avg_wait_hours:        {type: float, range: [0.0, 168.0], description: "Mean wait time of queued patients"}
+    overflow_flag:         {type: int,   range: [0, 1],    description: "1 if critical patients waiting >2h"}
+    waiting_patients:
+      type: List[Dict]
+      description: >
+        Full patient records for waiting queue. Each record includes:
+        id, acuity (0=critical…3=low), arrival_hour, los_remaining,
+        needs_ventilator, wait_hours.
+
+# ── Action Space ───────────────────────────────────────────────────────────────
+action_space:
+  type: Dict
+  fields:
+    patient_id:
+      type: int
+      description: "ID of waiting patient to schedule. Use -1 for no-op."
+    assign_bed_type:
+      type: int
+      values: {0: "ICU bed", 1: "General bed", 2: "None (no bed)"}
+    assign_or:
+      type: int
+      values: {0: "No OR", 1: "Schedule OR room"}
+    assign_ventilator:
+      type: int
+      values: {0: "No ventilator", 1: "Assign ventilator"}
+
+# ── Reward Function ────────────────────────────────────────────────────────────
+reward:
+  description: >
+    Shaped reward to guide safe and efficient resource allocation.
+  components:
+    - name: correct_icu_triage
+      value: +2.0
+      condition: "Critical patient correctly assigned to ICU"
+    - name: icu_waste
+      value: -0.5
+      condition: "Non-critical patient assigned to ICU"
+    - name: dangerous_placement
+      value: -2.0
+      condition: "Critical patient placed in general bed"
+    - name: appropriate_general
+      value: +1.0
+      condition: "Medium/Low patient correctly placed in general bed"
+    - name: ventilator_correct
+      value: +1.5
+      condition: "Ventilator assigned to patient who needs one"
+    - name: ventilator_waste
+      value: -0.5
+      condition: "Ventilator assigned to patient who doesn't need one"
+    - name: or_scheduling
+      value: +0.3
+      condition: "OR scheduled and OR room is available"
+    - name: wait_penalty
+      value: -0.1
+      per: "per hour of wait per patient"
+    - name: discharge_reward
+      value: +0.5
+      condition: "Patient successfully discharged after recovery"
+    - name: adverse_event
+      value: -3.0
+      condition: "Critical patient waited >2 hours without admission"
+    - name: staff_stretch
+      value: -0.5
+      condition: "Admission attempted when nurses or doctors unavailable"
+
+# ── Tasks ─────────────────────────────────────────────────────────────────────
+tasks:
+  - name: basic_triage
+    difficulty: easy
+    max_steps: 48
+    description: "Low-load, 2-day episode. Focus on correct bed-type assignment."
+
+  - name: full_scheduling
+    difficulty: medium
+    max_steps: 96
+    description: "Moderate load, 4-day episode. All resources active including OR and ventilators."
+
+  - name: crisis_surge
+    difficulty: hard
+    max_steps: 168
+    description: "High-surge 1-week episode with constrained capacity. Patient safety paramount."
+
+# ── Entry Points ──────────────────────────────────────────────────────────────
+entry_points:
+  environment:  "environment.py:HospitalSchedulingEnv"
+  tasks:        "tasks.py:load_task"
+  baseline:     "baseline.py:benchmark"
+
+# ── Reproducibility ───────────────────────────────────────────────────────────
+reproducibility:
+  default_seed: 42
+  deterministic: true
+  python_version: ">=3.10"
+  dependencies:
+    - python: ">=3.10"
+    # No third-party dependencies — pure stdlib
+
+# ── Baseline Scores (seed=0..4 average) ──────────────────────────────────────
+baseline_scores:
+  easy:
+    random:      {mean: 0.41, std: 0.06}
+    heuristic:   {mean: 0.82, std: 0.03}
+    greedy_fifo: {mean: 0.74, std: 0.04}
+  medium:
+    random:      {mean: 0.32, std: 0.07}
+    heuristic:   {mean: 0.71, std: 0.04}
+    greedy_fifo: {mean: 0.61, std: 0.05}
+  hard:
+    random:      {mean: 0.19, std: 0.08}
+    heuristic:   {mean: 0.56, std: 0.06}
+    greedy_fifo: {mean: 0.47, std: 0.07}
