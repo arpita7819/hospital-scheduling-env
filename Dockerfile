@@ -7,4 +7,4 @@ RUN pip install pyyaml
 
 EXPOSE 7860
 
-CMD ["python", "app.py"]
+CMD ["python", "baseline.py"]
