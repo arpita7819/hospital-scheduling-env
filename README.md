@@ -6,7 +6,7 @@ colorTo: green
 sdk: docker
 pinned: false
 ---
-
+  
 # 🏥 HospitalSchedulingEnv
 
 > An OpenEnv-compliant environment for training AI agents on **real-world hospital resource scheduling**.
