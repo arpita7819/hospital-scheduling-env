@@ -1,0 +1,20 @@
+version = 1
+requires-python = ">=3.10"
+
+[[package]]
+name = "hospital-scheduling-env"
+version = "1.0.0"
+source = { editable = "." }
+dependencies = [
+  { name = "openenv-core" },
+]
+
+[package.metadata]
+requires-dist = [
+  { name = "openenv-core", specifier = ">=0.2.0" },
+]
+
+[[package]]
+name = "openenv-core"
+version = "0.2.1"
+source = { registry = "https://pypi.org/simple" }
