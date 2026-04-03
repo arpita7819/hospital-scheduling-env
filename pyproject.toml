@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "hospital-scheduling-env"
+version = "1.0.0"
+description = "OpenEnv-compliant hospital resource scheduling environment for AI agent training"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+  {name = "arpita1204"}
+]
+keywords = ["openenv", "reinforcement-learning", "hospital", "scheduling", "ai"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = []
+
+[project.urls]
+"Homepage" = "https://huggingface.co/spaces/arpita1204/hospital"
+"Repository" = "https://github.com/arpita7819/hospital-scheduling-env"
+
+[tool.openenv]
+name = "HospitalSchedulingEnv"
+version = "1.0.0"
+entry_point = "environment:HospitalSchedulingEnv"
+tasks = ["basic_triage", "full_scheduling", "crisis_surge"]
+inference = "inference:run_inference"
+
+[tool.setuptools.packages.find]
+where = ["."]
