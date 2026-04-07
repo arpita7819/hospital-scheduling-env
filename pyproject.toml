@@ -13,6 +13,7 @@ authors = [{name = "arpita1204"}]
 keywords = ["openenv", "reinforcement-learning", "hospital", "scheduling"]
 dependencies = [
   "openenv-core>=0.2.0",
+  "openai>=1.0.0",
 ]
 
 [project.scripts]
