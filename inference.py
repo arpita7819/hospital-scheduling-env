@@ -1,7 +1,6 @@
 """
-inference.py — OpenEnv inference script.
-Runs a single episode with the heuristic agent and prints the score.
-Required by the OpenEnv competition spec.
+inference.py — OpenEnv inference script with required structured output.
+Prints [START], [STEP], and [END] blocks to stdout as required by the validator.
 """
 from environment import HospitalSchedulingEnv
 from tasks import load_task
@@ -14,6 +13,9 @@ def run_inference(difficulty: str = "hard", seed: int = 42) -> float:
     obs = env.reset(seed=seed)
     done = False
     trajectory = []
+    step_num = 0
+
+    print(f"[START] task={difficulty}", flush=True)
 
     while not done:
         action = agent.act(obs)
@@ -27,19 +29,17 @@ def run_inference(difficulty: str = "hard", seed: int = 42) -> float:
             "reward": reward, "patient_snapshot": patient_snap,
             "info": info,
         })
+        step_num += 1
+        print(f"[STEP] step={step_num} reward={round(reward, 4)}", flush=True)
         obs = next_obs
 
     score = task.grader(env, trajectory)
+    print(f"[END] task={difficulty} score={round(score, 4)} steps={step_num}", flush=True)
     return score
 
 
 if __name__ == "__main__":
-    import json
-    results = {}
     for diff in ["easy", "medium", "hard"]:
-        score = run_inference(difficulty=diff, seed=42)
-        results[diff] = round(score, 4)
-        print(f"{diff:8s}: {score:.4f}")
+        run_inference(difficulty=diff, seed=42)
 
-    print("\nInference complete.")
-    print(json.dumps(results, indent=2))
+ 
